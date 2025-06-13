@@ -143,6 +143,11 @@ export function formatCount(count, singular, plural = null) {
   return `${count} ${noun}`;
 }
 
+export function formatANoun(word) {
+  const a = /^[aeiou]/i.test(word) ? "an" : "a"; // crud heuristic
+  return `${a} ${word}`;
+}
+
 export function censorText(text) {
   return censor.applyTo(text, badWords.getAllMatches(text));
 }
@@ -153,6 +158,25 @@ export function capitalizeFirst(text) {
 
 export function formatDateTime(timestamp) {
   const d = new Date(timestamp);
-  const opts = { timeStyle: "short", hour12: false };
-  return `${d.toLocaleDateString()} ${d.toLocaleTimeString(undefined, opts)}`;
+  const opts = { dateStyle: "medium", timeStyle: "short", hour12: false };
+  return d.toLocaleString(undefined, opts);
+}
+
+const trimRegex =
+  /^[\p{White_Space}\p{Default_Ignorable_Code_Point}]+|[\p{White_Space}\p{Default_Ignorable_Code_Point}]+$/gu;
+
+export function unicodeTrim(str) {
+  return str.replace(trimRegex, "");
+}
+
+export function parseDuration(spec) {
+  const units = [7 * 24 * 3600, 24 * 3600, 3600, 60, 1];
+  const re =
+    /^(?:(\d+(?:\.\d+)?)w)?(?:(\d+(?:\.\d+)?)d)?(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m)?(?:(\d+(?:\.\d+)?)s)?$/i;
+  const m = re.exec(spec);
+  return !m || !m[0]
+    ? null
+    : units
+        .map((v, i) => (m[i + 1] ? parseFloat(m[i + 1]) * v : 0))
+        .reduce((a, c) => a + c);
 }

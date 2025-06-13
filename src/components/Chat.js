@@ -14,7 +14,7 @@ import firebase from "../firebase";
 import useFirebaseQuery from "../hooks/useFirebaseQuery";
 import useStats from "../hooks/useStats";
 import useStorage from "../hooks/useStorage";
-import { censorText } from "../util";
+import { censorText, unicodeTrim } from "../util";
 import autoscroll from "../utils/autoscroll";
 import emoji from "../utils/emoji";
 import ChatCards from "./ChatCards";
@@ -88,6 +88,8 @@ const makeMentionRE = (username) => {
   return new RegExp(`@(all|${username})(\\W|$)`, "iu");
 };
 
+const emojiRE = /:([a-z0-9_+-]+):/g;
+
 /** A chat sidebar element, opens lobby chat when the `gameId` prop is not set. */
 function Chat({
   title,
@@ -129,14 +131,14 @@ function Chat({
 
   function handleSubmit(event) {
     event.preventDefault();
-    const trimmed = input.trim();
-    if (trimmed) {
+    const text = unicodeTrim(input);
+    if (text) {
       firebase
         .database()
         .ref(databasePath)
         .push({
           user: user.id,
-          message: censorText(trimmed),
+          message: censorText(text),
           time: firebase.database.ServerValue.TIMESTAMP,
         });
     }
@@ -210,7 +212,7 @@ function Chat({
   };
 
   const processText = (text) => {
-    return text.replace(/:([a-z0-9_+-]+):/g, (m, n) => emoji[n] || m);
+    return text.replace(emojiRE, (m, n) => emoji[n] || m);
   };
 
   return (
